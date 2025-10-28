@@ -1,0 +1,5 @@
+{
+  "name": "Quant Equity Alpha Platform",
+  "description": "A web-based UI for a production-grade cross-sectional equity alpha platform. It allows users to configure strategies, run backtests, and analyze performance with AI-powered insights from Gemini.",
+  "requestFramePermissions": []
+}
