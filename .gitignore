@@ -7,18 +7,23 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
+# Node.js
+node_modules/
+dist/
+dist-ssr/
 *.local
 
-# Data and cache
-data/
-*.parquet
-*.csv
-*.feather
+# Data and cache (keep structure, ignore data files)
+data/*.parquet
+data/*.csv
+data/*.feather
+data/cache/
 
-# Reports
+# Models and results (generated files)
+models/*.pkl
+results/
+
+# Reports (generated)
 reports/
 
 # Python
@@ -29,7 +34,6 @@ __pycache__/
 .Python
 build/
 develop-eggs/
-dist/
 downloads/
 eggs/
 .eggs/
@@ -58,14 +62,14 @@ venv.bak/
 htmlcov/
 .tox/
 
-# Jupyter
-.ipynb_checkpoints
-*.ipynb
+# Jupyter (keep notebooks, ignore checkpoints only)
+.ipynb_checkpoints/
+*/.ipynb_checkpoints/
 
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
-.idea
+.idea/
 .DS_Store
 *.suo
 *.ntvs*
