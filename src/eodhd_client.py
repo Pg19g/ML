@@ -181,15 +181,18 @@ class EODHDClient:
         Returns:
             Dictionary with fundamentals data
         """
+        import json
+
         symbol = f"{ticker}.{exchange}"
-        cache_file = self.cache_dir / f"fundamentals_{symbol}.parquet"
+        cache_file = self.cache_dir / f"fundamentals_{symbol}.json"
 
         # Check cache (refresh daily)
         if use_cache and cache_file.exists():
             cache_age = datetime.now() - datetime.fromtimestamp(cache_file.stat().st_mtime)
             if cache_age < timedelta(days=1):
                 logger.debug(f"Loading cached fundamentals for {symbol}")
-                return pd.read_parquet(cache_file).to_dict("records")[0]
+                with open(cache_file, 'r') as f:
+                    return json.load(f)
 
         # Fetch from API
         logger.info(f"Fetching fundamentals for {symbol}")
@@ -198,9 +201,10 @@ class EODHDClient:
             response = self._make_request(f"fundamentals/{symbol}", {"fmt": "json"})
             data = response.json()
 
-            # Cache result
+            # Cache result as JSON (better for complex nested structures)
             if use_cache and data:
-                pd.DataFrame([data]).to_parquet(cache_file, index=False)
+                with open(cache_file, 'w') as f:
+                    json.dump(data, f, indent=2)
 
             return data
 
