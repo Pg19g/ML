@@ -1,0 +1,133 @@
+# Default configuration for Quant Equity Alpha Platform
+
+# Universe definition
+universe:
+  exchanges: ["US"]  # US, LSE, GPW, etc.
+  tickers: null  # Optional: explicit list overrides exchanges
+  min_price: 5.0
+  min_median_dollar_vol: 1000000  # $1M median daily dollar volume
+  max_tickers: 500  # Cap universe size for computational efficiency
+
+# Date range
+start_date: "2018-01-01"
+end_date: "2023-12-31"
+
+# Point-in-time configuration
+pit_lag_days: 2  # Conservative: fundamentals visible T+2 trading days after filing
+
+# Rebalancing
+rebalance_freq: "weekly"  # weekly | biweekly | monthly
+
+# Transaction costs
+costs:
+  bps_per_side: 5.0  # 5 bps per side (10 bps round-trip)
+  spread_proxy_bps: 3.0  # Additional spread cost estimate
+  slippage_sensitivity: 1.0  # Multiplier for sensitivity analysis
+
+# Sector configuration
+sector_source: "eodhd"  # Use EODHD GICS sectors when available
+
+# Portfolio construction
+portfolio:
+  long_pct: 0.20  # Top 20% long
+  short_pct: 0.20  # Bottom 20% short
+  target_beta: 0.0
+  beta_tolerance: 0.05
+  sector_max_weight: 0.15  # 15% max per sector
+  single_name_max_weight: 0.05  # 5% max per position
+  gross_leverage: 2.0  # 1.0 long + 1.0 short
+  net_exposure_target: 0.0
+
+# Optimizer settings
+optimizer:
+  method: "cvxpy"
+  turnover_penalty: 0.01  # Lambda for turnover penalty
+  risk_model:
+    use_pca: true
+    pca_components: 20
+    lookback_days: 252
+
+# Model configuration
+model:
+  type: "lightgbm_regressor"  # lightgbm_regressor | catboost_regressor | elasticnet
+  baseline_enabled: true  # Always train ElasticNet baseline
+  params:
+    # LightGBM params
+    n_estimators: 200
+    max_depth: 5
+    learning_rate: 0.05
+    num_leaves: 31
+    min_child_samples: 100
+    subsample: 0.8
+    colsample_bytree: 0.8
+    reg_alpha: 0.1
+    reg_lambda: 1.0
+    random_state: 42
+
+  # CatBoost params (if type=catboost_regressor)
+  catboost_params:
+    iterations: 200
+    depth: 5
+    learning_rate: 0.05
+    l2_leaf_reg: 3.0
+    random_seed: 42
+    verbose: False
+
+  # ElasticNet params (baseline)
+  elasticnet_params:
+    alpha: 0.01
+    l1_ratio: 0.5
+    max_iter: 1000
+    random_state: 42
+
+# Target variable
+targets:
+  primary: "next_21d_excess_vs_sector"  # Forward 21-day sector-excess return
+  horizon_days: 21
+  triple_barrier_enabled: false  # For meta-modeling
+
+# Cross-validation
+cv:
+  method: "walk_forward"
+  train_period_days: 252  # 1 year training
+  test_period_days: 63  # ~3 months testing
+  purge_days: 21  # Purge period equal to horizon
+  embargo_days: 21  # Additional embargo
+  min_train_size: 500  # Minimum samples for training
+
+# Feature engineering
+features:
+  # Composite weights (if not using ML)
+  composite_weights:
+    value: 0.35
+    quality: 0.25
+    momentum: 0.25
+    short_reversion: 0.15
+
+  # Winsorization
+  winsorize_quantiles: [0.01, 0.99]
+
+  # Sector normalization
+  sector_neutralize: true
+  min_sector_size: 10  # Minimum tickers per sector
+
+# Reporting
+reports:
+  generate_html: true
+  generate_markdown: true
+  out_dir: "reports/latest"
+  include_shap: true
+  include_factor_returns: true
+  include_exposures: true
+
+# Logging
+logging:
+  level: "INFO"  # DEBUG | INFO | WARNING | ERROR
+  file: "logs/quant_platform.log"
+
+# API configuration (read from env)
+api:
+  eodhd_key_env: "EODHD_API_KEY"
+  cache_dir: "data/cache"
+  retry_attempts: 3
+  retry_backoff: 2.0  # Exponential backoff multiplier

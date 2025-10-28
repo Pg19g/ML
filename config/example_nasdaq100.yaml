@@ -1,0 +1,52 @@
+# Example: NASDAQ-100 focused configuration
+
+# Override universe
+universe:
+  exchanges: ["US"]
+  tickers: null  # Let EODHD filter by exchange
+  min_price: 10.0
+  min_median_dollar_vol: 5000000  # $5M for higher liquidity
+  max_tickers: 100
+
+# Narrower date range for quick testing
+start_date: "2020-01-01"
+end_date: "2023-12-31"
+
+# More frequent rebalancing for liquid names
+rebalance_freq: "weekly"
+
+# Tighter costs for liquid US stocks
+costs:
+  bps_per_side: 3.0
+  spread_proxy_bps: 2.0
+  slippage_sensitivity: 1.0
+
+# More concentrated portfolio for high-conviction signals
+portfolio:
+  long_pct: 0.15  # Top 15% long
+  short_pct: 0.15  # Bottom 15% short
+  sector_max_weight: 0.20
+  single_name_max_weight: 0.08
+  gross_leverage: 2.0
+
+# Stricter turnover control
+optimizer:
+  turnover_penalty: 0.02
+
+# Use LightGBM with slightly more capacity
+model:
+  type: "lightgbm_regressor"
+  params:
+    n_estimators: 300
+    max_depth: 6
+    learning_rate: 0.03
+    num_leaves: 40
+    min_child_samples: 80
+
+# Quarterly CV splits
+cv:
+  train_period_days: 504  # 2 years
+  test_period_days: 63  # ~quarter
+
+reports:
+  out_dir: "reports/nasdaq100"
