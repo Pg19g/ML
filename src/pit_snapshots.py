@@ -355,11 +355,11 @@ class PITStore:
         Flatten nested payload structure into flat dict.
 
         Extracts commonly used fundamental fields.
+        Now works with filtered PIT payloads (no future data leakage).
         """
         flat = {}
 
         # Try to extract key fields (adjust based on EODHD structure)
-        # Example structure - adjust based on real API responses
 
         # Market cap, shares
         if "SharesStats" in payload:
@@ -381,7 +381,7 @@ class PITStore:
             flat["enterprise_value"] = valuation.get("EnterpriseValue")
             flat["ev_to_ebitda"] = valuation.get("EnterpriseValueEbitda")
 
-        # Financials (most recent period)
+        # Financials (most recent period available in this PIT snapshot)
         if "Financials" in payload:
             financials = payload["Financials"]
 
@@ -389,32 +389,52 @@ class PITStore:
             if "Income_Statement" in financials:
                 income = financials["Income_Statement"]
                 if "quarterly" in income and income["quarterly"]:
-                    # Get most recent quarter
-                    latest_q = next(iter(income["quarterly"].values()))
-                    flat["net_income"] = latest_q.get("netIncome")
-                    flat["total_revenue"] = latest_q.get("totalRevenue")
-                    flat["operating_income"] = latest_q.get("operatingIncome")
-                    flat["gross_profit"] = latest_q.get("grossProfit")
+                    # Get most recent quarter (highest date)
+                    latest_q = self._get_most_recent_period(income["quarterly"])
+                    if latest_q:
+                        flat["net_income"] = latest_q.get("netIncome")
+                        flat["total_revenue"] = latest_q.get("totalRevenue")
+                        flat["operating_income"] = latest_q.get("operatingIncome")
+                        flat["gross_profit"] = latest_q.get("grossProfit")
 
             # Balance sheet
             if "Balance_Sheet" in financials:
                 balance = financials["Balance_Sheet"]
                 if "quarterly" in balance and balance["quarterly"]:
-                    latest_q = next(iter(balance["quarterly"].values()))
-                    flat["total_assets"] = latest_q.get("totalAssets")
-                    flat["total_liabilities"] = latest_q.get("totalLiab")
-                    flat["total_stockholder_equity"] = latest_q.get("totalStockholderEquity")
-                    flat["cash"] = latest_q.get("cash")
+                    latest_q = self._get_most_recent_period(balance["quarterly"])
+                    if latest_q:
+                        flat["total_assets"] = latest_q.get("totalAssets")
+                        flat["total_liabilities"] = latest_q.get("totalLiab")
+                        flat["total_stockholder_equity"] = latest_q.get("totalStockholderEquity")
+                        flat["cash"] = latest_q.get("cash")
 
             # Cash flow
             if "Cash_Flow" in financials:
                 cashflow = financials["Cash_Flow"]
                 if "quarterly" in cashflow and cashflow["quarterly"]:
-                    latest_q = next(iter(cashflow["quarterly"].values()))
-                    flat["free_cash_flow"] = latest_q.get("freeCashFlow")
-                    flat["operating_cash_flow"] = latest_q.get("totalCashFromOperatingActivities")
+                    latest_q = self._get_most_recent_period(cashflow["quarterly"])
+                    if latest_q:
+                        flat["free_cash_flow"] = latest_q.get("freeCashFlow")
+                        flat["operating_cash_flow"] = latest_q.get("totalCashFromOperatingActivities")
 
         return flat
+
+    def _get_most_recent_period(self, periods: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        """
+        Get the most recent period from a dict of periods.
+
+        Args:
+            periods: Dict with date strings as keys (e.g., {"2024-09-30": {...}, "2024-06-30": {...}})
+
+        Returns:
+            The period data for the most recent date, or None if empty
+        """
+        if not periods:
+            return None
+
+        # Sort by date (descending) and get the first (most recent)
+        sorted_dates = sorted(periods.keys(), reverse=True)
+        return periods[sorted_dates[0]]
 
     def validate_pit_integrity(self, panel: pd.DataFrame) -> None:
         """
