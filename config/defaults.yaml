@@ -12,7 +12,22 @@ universe:
 start_date: "2018-01-01"
 end_date: "2023-12-31"
 
-# Point-in-time configuration
+# Point-in-time configuration (NEW SNAPSHOT SYSTEM)
+pit:
+  mode: "on_demand"  # on_demand | bulk_offline
+  snapshot_dir: "data/pit"
+  extra_lag_trading_days: 2  # Additional trading days after reported_date
+  conservative_lag_days:
+    quarterly: 60  # Calendar days fallback for quarterly
+    annual: 90     # Calendar days fallback for annual
+    ttm: 60
+  availability_source_priority:
+    - "earnings_report_date"
+    - "payload_updated_at"
+    - "period_end_plus_lag"
+  min_periods_required: 4  # Minimum periods to consider complete
+
+# Legacy PIT configuration (for backward compatibility)
 pit_lag_days: 2  # Conservative: fundamentals visible T+2 trading days after filing
 
 # Rebalancing
