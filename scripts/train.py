@@ -9,7 +9,7 @@ from pathlib import Path
 import pandas as pd
 from loguru import logger
 
-from src.pit_store import PITDataStore
+from src.data_loader import DataLoader
 from src.features.factors import FactorEngine, compute_forward_returns
 from src.models.train import train_with_cv
 from src.utils.logging import setup_logging
@@ -45,22 +45,32 @@ def main():
 
     logger.info(f"Starting model training with config: {args.config}")
 
-    # Load data
-    pit_store = PITDataStore(data_dir="data")
+    # Load data using new integrated DataLoader
+    # (combines prices from legacy PITDataStore + fundamentals from new PITStore)
+    pit_config = config.get("pit", {})
+    data_loader = DataLoader(
+        data_dir="data",
+        pit_snapshot_dir=pit_config.get("snapshot_dir", "data/pit"),
+        pit_lag_days=config.get("pit_lag_days", 2),
+    )
 
     start_date = config["start_date"]
     end_date = config["end_date"]
 
     logger.info(f"Loading data from {start_date} to {end_date}")
 
-    # Get merged prices and fundamentals
-    df = pit_store.merge_prices_fundamentals(start_date, end_date)
+    # Get merged prices and fundamentals (now uses PIT snapshots for fundamentals)
+    df = data_loader.merge_prices_fundamentals(start_date, end_date)
 
     if df.empty:
         logger.error("No data loaded")
         return
 
     logger.info(f"Loaded {len(df)} rows for {df['ticker'].nunique()} tickers")
+
+    # Validate PIT integrity (ensure no information leakage)
+    logger.info("Validating PIT integrity...")
+    data_loader.validate_pit_integrity_end_to_end(df)
 
     # Filter universe
     min_price = config["universe"].get("min_price", 5.0)
