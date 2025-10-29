@@ -2,9 +2,21 @@
 
 A production-grade cross-sectional equity alpha platform for building, backtesting, and deploying long/short equity strategies using EODHD end-of-day data.
 
+## ✨ NEW: Zero-Leakage PIT Snapshot Architecture
+
+**Revolutionary approach to fundamentals data** - eliminates information leakage through immutable snapshots with computed effective_date.
+
+- 🎯 **Zero Information Leakage**: Each snapshot has explicit effective_date = earliest date market could know the numbers
+- 📸 **Immutable Snapshots**: Each statement period saved separately, never overwritten
+- 🔄 **On-Demand Ingestion**: Fetch once from API, work offline forever
+- ✅ **PIT Integrity Validation**: Automatic detection of look-ahead bias
+- 🌍 **All-Markets Support**: Universal design for US, EU, UK, PL, and any exchange
+
+**→ See [ARCHITECTURE_PIT.md](ARCHITECTURE_PIT.md) for complete design documentation**
+
 ## Features
 
-- **Point-in-Time Data Integrity**: Fundamentals visible only after publication date + configurable lag (default T+2)
+- **Point-in-Time Data Integrity**: NEW snapshot-based system prevents all forms of information leakage
 - **Robust Factor Engineering**: Value, Quality, Momentum, and Short-term Reversion factors with sector neutralization
 - **ML Model Training**: LightGBM/CatBoost with purged walk-forward cross-validation
 - **Portfolio Optimization**: Sector-neutral long/short with cvxpy QP optimizer
