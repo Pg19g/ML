@@ -212,6 +212,44 @@ class EODHDClient:
             logger.error(f"Failed to fetch fundamentals for {symbol}: {e}")
             return {}
 
+    def get_full_fundamentals(self, symbol: str, use_cache: bool = True) -> Dict[str, Any]:
+        """
+        Fetch complete fundamentals payload for a symbol.
+
+        Alias for get_fundamentals that accepts full symbol notation (TICKER.EXCHANGE).
+        No date filters - returns entire historical fundamentals dataset.
+
+        Args:
+            symbol: Full symbol (e.g., "AAPL.US", "BPN.WAR")
+            use_cache: Whether to use cached data
+
+        Returns:
+            Complete fundamentals dictionary from EODHD
+        """
+        # Parse symbol
+        if "." in symbol:
+            ticker, exchange = symbol.rsplit(".", 1)
+        else:
+            ticker = symbol
+            exchange = "US"  # Default
+
+        return self.get_fundamentals(ticker, exchange, use_cache)
+
+    def list_exchange_symbols(self, exchange: str, use_cache: bool = True) -> pd.DataFrame:
+        """
+        List all symbols for an exchange.
+
+        Alias for get_exchange_tickers with consistent naming.
+
+        Args:
+            exchange: Exchange code (e.g., "US", "WAR", "LSE")
+            use_cache: Whether to use cached data
+
+        Returns:
+            DataFrame with symbol information
+        """
+        return self.get_exchange_tickers(exchange, use_cache)
+
     def get_exchange_tickers(
         self, exchange: str = "US", use_cache: bool = True
     ) -> pd.DataFrame:
