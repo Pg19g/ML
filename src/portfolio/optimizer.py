@@ -173,7 +173,10 @@ class PortfolioOptimizer:
             problem.solve(solver=cp.OSQP, verbose=False)
 
             if problem.status not in ["optimal", "optimal_inaccurate"]:
-                logger.warning(f"Optimization status: {problem.status}")
+                logger.warning(
+                    f"CVXPY optimization {problem.status} - falling back to "
+                    f"rank-based equal-weight portfolio"
+                )
                 # Fallback to simple ranking
                 return self._fallback_weights(scores, sectors)
 
@@ -191,7 +194,10 @@ class PortfolioOptimizer:
             return weights
 
         except Exception as e:
-            logger.error(f"Optimization failed: {e}")
+            logger.warning(
+                f"CVXPY optimization failed ({e}) - falling back to "
+                f"rank-based equal-weight portfolio"
+            )
             return self._fallback_weights(scores, sectors)
 
     def _fallback_weights(
@@ -200,6 +206,11 @@ class PortfolioOptimizer:
         """
         Fallback to simple ranking-based weights if optimization fails.
 
+        Creates equal-weighted long/short portfolio:
+        - Long: Top N% by score (equal weight)
+        - Short: Bottom N% by score (equal weight)
+        - Normalized to target gross leverage
+
         Args:
             scores: Alpha scores
             sectors: Sector labels
@@ -207,7 +218,11 @@ class PortfolioOptimizer:
         Returns:
             Simple long/short weights
         """
-        logger.info("Using fallback ranking-based weights")
+        logger.warning(
+            f"Using fallback: rank-based equal-weight portfolio "
+            f"(long top {self.constraints.long_pct*100:.0f}%, "
+            f"short bottom {self.constraints.short_pct*100:.0f}%)"
+        )
 
         n = len(scores)
         weights = pd.Series(0.0, index=scores.index)
