@@ -4,6 +4,25 @@ numpy==1.26.2
 polars==0.20.2
 scipy==1.11.4
 
+# Web Framework (NEW)
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+streamlit==1.28.2
+pydantic==2.5.0
+aiohttp==3.9.1
+
+# Database (NEW)
+sqlalchemy==2.0.23
+psycopg2-binary==2.9.9
+alembic==1.12.1
+
+# Backtesting (NEW)
+backtesting==0.3.3
+TA-Lib==0.4.28
+
+# AI Integration (NEW)
+google-generativeai==0.3.1
+
 # Data acquisition
 requests==2.31.0
 pyarrow==14.0.2
